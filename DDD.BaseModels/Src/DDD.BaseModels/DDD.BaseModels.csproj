@@ -4,6 +4,10 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>DDD models </Title>
+    <RepositoryUrl>https://github.com/AmirHosseinBaderan/ddd-base-models</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/AmirHosseinBaderan/ddd-base-models</PackageProjectUrl>
   </PropertyGroup>
 
 </Project>
