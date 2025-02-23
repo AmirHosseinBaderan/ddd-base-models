@@ -14,6 +14,14 @@ public class EntityId : ValueObject<EntityId>
         Value = value,
     };
 
+    public static EntityId? Create(Guid? value) =>
+        value is null
+        ? null
+            : new()
+            {
+                Value = (Guid)value,
+            };
+
     public static EntityId CreateUniqueId() => Create(Guid.NewGuid());
 
     public override string ToString()
