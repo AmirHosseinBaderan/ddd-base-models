@@ -9,7 +9,7 @@ public static class QueryExtension
             .Take(pageSize);
 
     public static async Task<PaginationResult<T>> ToPaginationAsync<T>(this IQueryable<T> query, int page, int pageSize,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
         var count = await query.CountAsync(cancellationToken);
         var result = page == 0 && pageSize == 0

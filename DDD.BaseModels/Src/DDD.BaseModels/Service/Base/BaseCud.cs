@@ -11,12 +11,12 @@ internal class BaseCud<TContext, TEntity>(TContext context, ILogger<IBaseCud<TCo
 
     private IRepositoryState _state = new LocalSaveState();
 
-    public async Task<bool> DeleteAsync(IEnumerable<TEntity> entities)
+    public async Task<bool> DeleteAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         try
         {
             _dbSet.RemoveRange(entities);
-            return await SaveAsync();
+            return await SaveAsync(cancellationToken);
         }
         catch (Exception ex)
         {
@@ -25,13 +25,13 @@ internal class BaseCud<TContext, TEntity>(TContext context, ILogger<IBaseCud<TCo
         }
     }
 
-    public async Task<bool> DeleteAsync(TEntity? entity)
+    public async Task<bool> DeleteAsync(TEntity? entity, CancellationToken cancellationToken = default)
     {
         try
         {
             if (entity is not null)
                 _dbSet.Remove(entity);
-            return await SaveAsync();
+            return await SaveAsync(cancellationToken);
         }
         catch (Exception ex)
         {
@@ -40,11 +40,12 @@ internal class BaseCud<TContext, TEntity>(TContext context, ILogger<IBaseCud<TCo
         }
     }
 
-    public async Task<bool> DeleteAsync(Expression<Func<TEntity, bool>> where)
-        => await DeleteAsync(await _dbSet.Where(where).ToListAsync());
+    public async Task<bool> DeleteAsync(Expression<Func<TEntity, bool>> where,
+        CancellationToken cancellationToken = default)
+        => await DeleteAsync(await _dbSet.Where(where).ToListAsync(cancellationToken), cancellationToken);
 
-    public async Task<bool> DeleteAsync(object id)
-        => await DeleteAsync(await _dbSet.FindAsync(id));
+    public async Task<bool> DeleteAsync(object id, CancellationToken cancellationToken = default)
+        => await DeleteAsync(await _dbSet.FindAsync(id), cancellationToken);
 
     public async ValueTask DisposeAsync()
     {
@@ -52,12 +53,12 @@ internal class BaseCud<TContext, TEntity>(TContext context, ILogger<IBaseCud<TCo
         await context.DisposeAsync();
     }
 
-    public async Task<bool> InsertAsync(TEntity entity)
+    public async Task<bool> InsertAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         try
         {
-            await _dbSet.AddAsync(entity);
-            return await SaveAsync();
+            await _dbSet.AddAsync(entity, cancellationToken);
+            return await SaveAsync(cancellationToken);
         }
         catch (Exception ex)
         {
@@ -66,12 +67,12 @@ internal class BaseCud<TContext, TEntity>(TContext context, ILogger<IBaseCud<TCo
         }
     }
 
-    public async Task<bool> InsertAsync(IEnumerable<TEntity> entities)
+    public async Task<bool> InsertAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         try
         {
-            await _dbSet.AddRangeAsync(entities);
-            return await SaveAsync();
+            await _dbSet.AddRangeAsync(entities, cancellationToken);
+            return await SaveAsync(cancellationToken);
         }
         catch (Exception ex)
         {
@@ -80,7 +81,7 @@ internal class BaseCud<TContext, TEntity>(TContext context, ILogger<IBaseCud<TCo
         }
     }
 
-    public async Task<bool> SaveAsync()
+    public async Task<bool> SaveAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -97,13 +98,13 @@ internal class BaseCud<TContext, TEntity>(TContext context, ILogger<IBaseCud<TCo
         => _state = state;
 
 
-    public async Task<bool> UpdateAsync(TEntity entity)
+    public async Task<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         try
         {
             context.Entry(entity).State = EntityState.Modified;
             _dbSet.Update(entity);
-            return await SaveAsync();
+            return await SaveAsync(cancellationToken);
         }
         catch (Exception ex)
         {
@@ -112,12 +113,12 @@ internal class BaseCud<TContext, TEntity>(TContext context, ILogger<IBaseCud<TCo
         }
     }
 
-    public async Task<bool> UpdateAsync(IEnumerable<TEntity> entities)
+    public async Task<bool> UpdateAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         try
         {
             _dbSet.UpdateRange(entities);
-            return await SaveAsync();
+            return await SaveAsync(cancellationToken);
         }
         catch (Exception ex)
         {
