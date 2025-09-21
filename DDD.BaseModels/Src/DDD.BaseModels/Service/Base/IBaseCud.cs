@@ -30,7 +30,7 @@ public interface IBaseCud<TContext> : IAsyncDisposable where TContext : DbContex
 
     Task<bool> InsertAsync<TEntity>(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
         where TEntity : BaseEntity;
-
+    
     Task<bool> UpdateAsync<TEntity>(TEntity entity, CancellationToken cancellationToken = default)
         where TEntity : BaseEntity;
 
