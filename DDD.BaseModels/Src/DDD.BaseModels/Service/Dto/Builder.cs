@@ -5,12 +5,21 @@ public class DtoBuilder<T>(T aggregate)
 {
     private readonly HashSet<string> _ignoredProps = new();
     private readonly List<(string Key, Func<T, object?> Value)> _extraProps = new();
+    private readonly List<Func<T, string?>> _conditionalIgnores = new();
 
-    // Ignore property
+    // Ignore property directly
     public DtoBuilder<T> Ignore(Expression<Func<T, object>> selector)
     {
         var name = GetPropertyName(selector);
         _ignoredProps.Add(name);
+        return this;
+    }
+
+    // Ignore property if condition matches
+    public DtoBuilder<T> IgnoreWhere(Expression<Func<T, object>> selector, Func<T, bool> condition)
+    {
+        var name = GetPropertyName(selector);
+        _conditionalIgnores.Add(x => condition(x) ? name : null);
         return this;
     }
 
@@ -24,6 +33,14 @@ public class DtoBuilder<T>(T aggregate)
     // Build DTO as dictionary
     public Dictionary<string, object?> Build()
     {
+        // Evaluate conditional ignores
+        foreach (var rule in _conditionalIgnores)
+        {
+            var result = rule(aggregate);
+            if (result != null)
+                _ignoredProps.Add(result);
+        }
+
         var props = typeof(T).GetProperties()
             .Where(p => p.CanRead
                         && p.Name != nameof(AggregateRootBase.Id)
@@ -36,6 +53,7 @@ public class DtoBuilder<T>(T aggregate)
         // Add extra properties
         foreach (var (key, func) in _extraProps)
             props[key] = func(aggregate);
+
         return props;
     }
 
