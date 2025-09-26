@@ -1,8 +1,10 @@
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 
 namespace DDD.BaseModels.Service;
 
+// -------------------- DtoBuilder --------------------
 public class DtoBuilder<T>(T aggregate)
     where T : AggregateRootBase
 {
@@ -30,6 +32,13 @@ public class DtoBuilder<T>(T aggregate)
     public DtoBuilder<T> Add(string key, Func<T, object?> valueFactory)
     {
         _extraProps.Add((key, valueFactory));
+        return this;
+    }
+
+    // Apply a profile
+    public DtoBuilder<T> ApplyProfile(DtoProfile<T> profile)
+    {
+        profile.Configure(this);
         return this;
     }
 
@@ -106,7 +115,7 @@ public class DtoBuilder<T>(T aggregate)
     }
 }
 
-// helper extension for generating properties
+// -------------------- Extensions --------------------
 public static class TypeBuilderExtensions
 {
     public static void DefinePropertyWithBackingField(this TypeBuilder typeBuilder, string propertyName, Type propertyType)
