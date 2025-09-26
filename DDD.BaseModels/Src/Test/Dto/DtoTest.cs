@@ -91,6 +91,36 @@ public class DtoTest(ITestOutputHelper outputHelper)
         Assert.Contains("value test", dtoJson);
         Assert.DoesNotContain("Events", dtoJson); // Ignored
     }
+    
+    [Fact]
+    public void ApplyProfiles_FromAssembly_Works()
+    {
+        // Arrange
+        var domain = new Domain
+        {
+            Id = EntityId.CreateUniqueId(),
+            Name = "Amir",
+            LastName = "Baderan",
+            CreatedOn = DateTime.UtcNow
+        };
+
+        // Register all profiles from this test assembly
+        DtoProfileRegistry.RegisterProfilesFromAssembly(typeof(DomainProfile).Assembly);
+
+        // Act
+        var dto = domain
+            .ToDtoBuilder()
+            .ApplyProfilesFromRegistry()
+            .Build();
+
+        var json = JsonConvert.SerializeObject(dto);
+        outputHelper.WriteLine("DTO JSON: " + json);
+
+        // Assert
+        Assert.Contains("Amir", json); // original Name
+        Assert.Contains("value test", json); // added by profile
+        Assert.DoesNotContain("Events", json); // ignored by profile
+    }
 }
 
 class Domain : AggregateRootBase
@@ -98,4 +128,15 @@ class Domain : AggregateRootBase
     public string Name { get; set; } = null!;
 
     public string LastName { get; set; } = null!;
+}
+
+class DomainProfile : DtoProfile<Domain>
+{
+    public override void Configure(DtoBuilder<Domain> builder)
+    {
+        builder
+            .Ignore(x => x.Events)
+            .IgnoreWhere(x => x.UpdatedOn, x => x.UpdatedOn == null)
+            .Add("TestAdd", x => "value test");
+    }
 }
