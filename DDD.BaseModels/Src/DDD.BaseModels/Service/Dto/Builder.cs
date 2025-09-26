@@ -35,10 +35,22 @@ public class DtoBuilder<T>(T aggregate)
         return this;
     }
 
-    // Apply a profile
+    // Apply a profile manually
     public DtoBuilder<T> ApplyProfile(DtoProfile<T> profile)
     {
         profile.Configure(this);
+        return this;
+    }
+
+    // Apply profiles from registry (assembly scanned)
+    public DtoBuilder<T> ApplyProfilesFromRegistry()
+    {
+        var profiles = DtoProfileRegistry.GetProfilesFor<T>();
+        foreach (var profile in profiles)
+        {
+            profile.Configure(this);
+        }
+
         return this;
     }
 
@@ -115,10 +127,12 @@ public class DtoBuilder<T>(T aggregate)
     }
 }
 
+
 // -------------------- Extensions --------------------
 public static class TypeBuilderExtensions
 {
-    public static void DefinePropertyWithBackingField(this TypeBuilder typeBuilder, string propertyName, Type propertyType)
+    public static void DefinePropertyWithBackingField(this TypeBuilder typeBuilder, string propertyName,
+        Type propertyType)
     {
         var fieldBuilder = typeBuilder.DefineField($"_{propertyName}", propertyType, FieldAttributes.Private);
 
