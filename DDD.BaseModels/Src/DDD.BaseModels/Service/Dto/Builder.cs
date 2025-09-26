@@ -50,35 +50,24 @@ public class DtoBuilder<T>(T aggregate)
         {
             profile.Configure(this);
         }
-
         return this;
     }
 
-    // Build DTO as dictionary
+    // Build DTO as dictionary for a single object
     public Dictionary<string, object?> Build()
     {
-        // Evaluate conditional ignores
-        foreach (var rule in _conditionalIgnores)
+        return BuildFrom(aggregate);
+    }
+
+    // Build DTO for a list of aggregates
+    public List<Dictionary<string, object?>> BuildList(IEnumerable<T> items)
+    {
+        var list = new List<Dictionary<string, object?>>();
+        foreach (var item in items)
         {
-            var result = rule(aggregate);
-            if (result != null)
-                _ignoredProps.Add(result);
+            list.Add(BuildFrom(item));
         }
-
-        var props = typeof(T).GetProperties()
-            .Where(p => p.CanRead
-                        && p.Name != nameof(AggregateRootBase.Id)
-                        && !_ignoredProps.Contains(p.Name))
-            .ToDictionary(p => p.Name, p => p.GetValue(aggregate));
-
-        // Always include EntityId
-        props["Id"] = aggregate.Id.Value;
-
-        // Add extra properties
-        foreach (var (key, func) in _extraProps)
-            props[key] = func(aggregate);
-
-        return props;
+        return list;
     }
 
     // Build runtime type for Swagger
@@ -115,6 +104,40 @@ public class DtoBuilder<T>(T aggregate)
         return typeBuilder.CreateType()!;
     }
 
+    // Build runtime type for Swagger (list version)
+    public Type BuildTypeList(string typeName = "DynamicDtoList")
+    {
+        var elementType = BuildType(typeName.Replace("List", ""));
+        return typeof(List<>).MakeGenericType(elementType);
+    }
+
+    // Helper: build dictionary for any instance of T
+    private Dictionary<string, object?> BuildFrom(T item)
+    {
+        // Evaluate conditional ignores
+        foreach (var rule in _conditionalIgnores)
+        {
+            var result = rule(item);
+            if (result != null)
+                _ignoredProps.Add(result);
+        }
+
+        var props = typeof(T).GetProperties()
+            .Where(p => p.CanRead
+                        && p.Name != nameof(AggregateRootBase.Id)
+                        && !_ignoredProps.Contains(p.Name))
+            .ToDictionary(p => p.Name, p => p.GetValue(item));
+
+        // Always include EntityId
+        props["Id"] = item.Id.Value;
+
+        // Add extra properties
+        foreach (var (key, func) in _extraProps)
+            props[key] = func(item);
+
+        return props;
+    }
+
     private static string GetPropertyName(Expression<Func<T, object>> expression)
     {
         if (expression.Body is MemberExpression member)
@@ -126,7 +149,6 @@ public class DtoBuilder<T>(T aggregate)
         throw new ArgumentException("Invalid expression");
     }
 }
-
 
 // -------------------- Extensions --------------------
 public static class TypeBuilderExtensions
