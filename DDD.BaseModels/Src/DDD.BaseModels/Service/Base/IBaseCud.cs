@@ -21,32 +21,16 @@ public interface IBaseCud<TContext, TEntity> : IAsyncDisposable where TEntity : 
     Task<bool> SaveAsync(CancellationToken cancellationToken = default);
 
     void SetState(IRepositoryState state);
-}
-
-public interface IBaseCud<TContext> : IAsyncDisposable where TContext : DbContext
-{
-    Task<bool> InsertAsync<TEntity>(TEntity entity, CancellationToken cancellationToken = default)
-        where TEntity : BaseEntity;
-
-    Task<bool> InsertAsync<TEntity>(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-        where TEntity : BaseEntity;
     
-    Task<bool> UpdateAsync<TEntity>(TEntity entity, CancellationToken cancellationToken = default)
-        where TEntity : BaseEntity;
+    Task<TResult> UpdateAsync<TResult>(object id, Func<TResult> notFound, Func<TEntity?, Task<TResult>> final,
+        Func<TEntity, TEntity> update);
 
-    Task<bool> UpdateAsync<TEntity>(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-        where TEntity : BaseEntity;
+    Task<TResult> UpdateAsync<TResult>(object id, Func<TResult> notFound, Func<TEntity?, TResult> final,
+        Func<TEntity, TEntity> update);
+    
+    Task<TResult> InsertAsync<TResult>(Expression<Func<TEntity, bool>> existExpression,
+        Func<TResult> exist, Func<TEntity> create, Func<TEntity?, TResult> final);
 
-    Task<bool> DeleteAsync<TEntity>(object id, CancellationToken cancellationToken = default)
-        where TEntity : BaseEntity;
-
-    Task<bool> DeleteAsync<TEntity>(TEntity entity, CancellationToken cancellationToken = default)
-        where TEntity : BaseEntity;
-
-    Task<bool> DeleteAsync<TEntity>(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-        where TEntity : BaseEntity;
-
-    Task<bool> DeleteAsync<TEntity>(Expression<Func<TEntity, bool>> where,
-        CancellationToken cancellationToken = default)
-        where TEntity : BaseEntity;
+    Task<TResult> InsertAsync<TResult>(Expression<Func<TEntity, bool>> existExpression,
+        Func<TResult> exist, Func<TEntity> create, Func<TEntity?, Task<TResult>> final);
 }

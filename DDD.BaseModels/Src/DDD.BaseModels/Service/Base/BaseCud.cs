@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 namespace DDD.BaseModels.Service;
 
 internal class BaseCud<TContext, TEntity>(TContext context, ILogger<IBaseCud<TContext, TEntity>> logger)
-    : IBaseCud<TContext>, IBaseCud<TContext, TEntity> where TEntity : BaseEntity where TContext : DbContext
+    : IBaseCud<TContext, TEntity> where TEntity : BaseEntity where TContext : DbContext
 {
     private readonly DbSet<TEntity> _dbSet = context.Set<TEntity>();
 
@@ -212,4 +212,57 @@ internal class BaseCud<TContext, TEntity>(TContext context, ILogger<IBaseCud<TCo
     async Task<bool> DeleteAsync<TEntity1>(DbSet<TEntity1> set, Expression<Func<TEntity1, bool>> where,
         CancellationToken cancellationToken = default) where TEntity1 : BaseEntity
         => await DeleteAsync(set, await set.Where(where).ToListAsync(cancellationToken), cancellationToken);
+
+    public async Task<TResult> InsertAsync<TResult>(Expression<Func<TEntity, bool>> existExpression,
+        Func<TResult> exist, Func<TEntity> create, Func<TEntity?, TResult> final)
+    {
+        TEntity? entity = await _dbSet.FirstOrDefaultAsync(existExpression);
+        if (entity is not null)
+            return exist();
+
+        TEntity newEntity = create();
+        return await InsertAsync(newEntity)
+            ? final(newEntity)
+            : final(null);
+    }
+
+    public async Task<TResult> InsertAsync<TResult>(Expression<Func<TEntity, bool>> existExpression,
+        Func<TResult> exist, Func<TEntity> create, Func<TEntity?, Task<TResult>> final)
+    {
+        TEntity? entity = await _dbSet.FirstOrDefaultAsync(existExpression);
+        if (entity is not null)
+            return exist();
+
+        TEntity newEntity = create();
+        return await InsertAsync(newEntity)
+            ? await final(newEntity)
+            : await final(null);
+    }
+
+    public async Task<TResult> UpdateAsync<TResult>(object id, Func<TResult> notFound,
+        Func<TEntity?, Task<TResult>> final,
+        Func<TEntity, TEntity> update)
+    {
+        TEntity? entity = await _dbSet.FindAsync(id);
+        if (entity is null)
+            return notFound();
+
+        TEntity updateEntity = update(entity);
+        return await final(await UpdateAsync(updateEntity)
+            ? updateEntity
+            : null);
+    }
+
+    public async Task<TResult> UpdateAsync<TResult>(object id, Func<TResult> notFound, Func<TEntity?, TResult> final,
+        Func<TEntity, TEntity> update)
+    {
+        TEntity? entity = await _dbSet.FindAsync(id);
+        if (entity is null)
+            return notFound();
+
+        TEntity updateEntity = update(entity);
+        return final(await UpdateAsync(updateEntity)
+            ? updateEntity
+            : null);
+    }
 }
