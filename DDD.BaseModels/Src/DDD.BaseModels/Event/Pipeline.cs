@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-
 namespace DDD.BaseModels;
 
 public static class PipelineExtensions
