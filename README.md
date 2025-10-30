@@ -1,6 +1,6 @@
 # DDD.BaseModels
 
-A lightweight base library for building **Domain-Driven Design (DDD)** projects in C#.  
+A lightweight base library for building **Domain-Driven Design (DDD)** projects in C#.
 Provides **base entities, aggregates, value objects, and services** to reduce boilerplate and keep your domain clean.
 
 ---
@@ -23,12 +23,14 @@ PM> Install-Package DDD.BaseModels
 
 ## 🚀 Features
 
-- `EntityId` – strongly typed entity identifiers  
-- `BaseEntity` – common base for all entities  
-- `AggregateRootBase` – aggregate root with identity tracking  
-- `ValueObject<T>` – helper for implementing value objects  
-- `DtoBuilder<T>` – fluent API to build DTOs from aggregates  
-- `IBaseCud<TContext, TEntity>` – base Create/Update/Delete service contracts  
+* `EntityId` – strongly typed entity identifiers
+* `BaseEntity` – common base for all entities
+* `AggregateRootBase` – aggregate root with identity tracking
+* `ValueObject<T>` – helper for implementing value objects
+* `DtoBuilder<T>` – fluent API to build DTOs from aggregates
+* `IBaseCud<TContext, TEntity>` – base Create/Update/Delete service contracts
+* **Specification Pattern** – flexible query specifications (`ISpecification<T>`, `BaseSpecification<T>`, `SpecificationEvaluator`)
+* **Query Extensions** – LINQ helpers for pagination, filtering, and conditional queries
 
 ---
 
@@ -102,8 +104,6 @@ If `Email` is `null` or empty, it will be excluded from the DTO.
 
 ### 5. Base CUD Service
 
-Define a **CUD service** for your DbContext and entity:
-
 ```csharp
 using DDD.BaseModels.Service;
 
@@ -120,11 +120,66 @@ public class UserService(IBaseCud<AppDbContext, User> cud)
 
 ---
 
-### 6. Dependency Injection Extensions
+### 6. Specification Pattern
 
-The package provides ready-to-use DI extensions for setting up base services and domain event handlers.
+#### Define a Specification
 
-Usage in `Program.cs`:
+```csharp
+using DDD.BaseModels.Service;
+using System.Linq.Expressions;
+
+public class ActiveUsersSpecification : BaseSpecification<User>
+{
+    public ActiveUsersSpecification()
+        : base(u => u.IsActive)
+    {
+        ApplyOrderBy(u => u.Name);
+        ApplyPaging(0, 20);
+    }
+}
+```
+
+#### Apply Specification with Evaluator
+
+```csharp
+var activeUsersSpec = new ActiveUsersSpecification();
+var query = SpecificationEvaluator.GetQuery(dbContext.Users.AsQueryable(), activeUsersSpec);
+var users = await query.ToListAsync();
+```
+
+---
+
+### 7. Query Extensions
+
+#### Pagination
+
+```csharp
+var pagedUsers = dbContext.Users
+                           .ToPagination(page: 1, pageSize: 10)
+                           .ToList();
+```
+
+#### Conditional Filtering
+
+```csharp
+var filtered = dbContext.Users
+                        .WhereIf(includeInactive, u => !u.IsActive)
+                        .OrderByIf(sortByName, u => u.Name)
+                        .ToList();
+```
+
+#### Where Contains & Where In
+
+```csharp
+var searchResult = dbContext.Users
+                            .WhereContains(u => u.Name, "Amir")
+                            .WhereIn(u => u.Id, allowedIds)
+                            .ToList();
+```
+
+---
+
+### 8. Dependency Injection Extensions
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -136,4 +191,3 @@ services.AddDDDBaseServices();
 // Configure domain events from current assembly
 services.ConfigDDDEvents(typeof(Program).Assembly);
 ```
-
