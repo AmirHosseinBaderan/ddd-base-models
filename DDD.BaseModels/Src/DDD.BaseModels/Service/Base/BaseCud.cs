@@ -55,63 +55,7 @@ internal class BaseCud<TContext, TEntity>(TContext context, ILogger<IBaseCud<TCo
 
     public Task<bool> UpdateAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
         => UpdateAsync(_dbSet, entities, cancellationToken);
-
-    public Task<bool> InsertAsync<TEntity1>(TEntity1 entity, CancellationToken cancellationToken = default)
-        where TEntity1 : BaseEntity
-    {
-        var set = context.Set<TEntity1>();
-        return InsertAsync(set, entity, cancellationToken);
-    }
-
-    public Task<bool> InsertAsync<TEntity1>(IEnumerable<TEntity1> entities,
-        CancellationToken cancellationToken = default) where TEntity1 : BaseEntity
-    {
-        var set = context.Set<TEntity1>();
-        return InsertAsync(set, entities, cancellationToken);
-    }
-
-    public Task<bool> UpdateAsync<TEntity1>(TEntity1 entity, CancellationToken cancellationToken = default)
-        where TEntity1 : BaseEntity
-    {
-        var set = context.Set<TEntity1>();
-        return UpdateAsync(set, entity, cancellationToken);
-    }
-
-    public Task<bool> UpdateAsync<TEntity1>(IEnumerable<TEntity1> entities,
-        CancellationToken cancellationToken = default) where TEntity1 : BaseEntity
-    {
-        var set = context.Set<TEntity1>();
-        return UpdateAsync(set, entities, cancellationToken);
-    }
-
-    public Task<bool> DeleteAsync<TEntity1>(object id, CancellationToken cancellationToken = default)
-        where TEntity1 : BaseEntity
-    {
-        var set = context.Set<TEntity1>();
-        return DeleteAsync(set, id, cancellationToken);
-    }
-
-    public Task<bool> DeleteAsync<TEntity1>(TEntity1 entity, CancellationToken cancellationToken = default)
-        where TEntity1 : BaseEntity
-    {
-        var set = context.Set<TEntity1>();
-        return DeleteAsync(set, entity, cancellationToken);
-    }
-
-    public Task<bool> DeleteAsync<TEntity1>(IEnumerable<TEntity1> entities,
-        CancellationToken cancellationToken = default) where TEntity1 : BaseEntity
-    {
-        var set = context.Set<TEntity1>();
-        return DeleteAsync(set, entities, cancellationToken);
-    }
-
-    public Task<bool> DeleteAsync<TEntity1>(Expression<Func<TEntity1, bool>> where,
-        CancellationToken cancellationToken = default) where TEntity1 : BaseEntity
-    {
-        var set = context.Set<TEntity1>();
-        return DeleteAsync(set, where, cancellationToken);
-    }
-
+    
     async Task<bool> InsertAsync<TEntity1>(DbSet<TEntity1> set, TEntity1 entity,
         CancellationToken cancellationToken = default)
         where TEntity1 : BaseEntity
