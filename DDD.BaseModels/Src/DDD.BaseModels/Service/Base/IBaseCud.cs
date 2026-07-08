@@ -20,8 +20,12 @@ public interface IBaseCud<TContext, TEntity> : IAsyncDisposable where TEntity : 
 
     Task<bool> SaveAsync(CancellationToken cancellationToken = default);
 
-    void SetState(IRepositoryState state);
-    
+    Task<bool> BeginTransactionAsync(CancellationToken cancellationToken = default);
+
+    Task<bool> CommitAsync(CancellationToken cancellationToken = default);
+
+    Task RollbackAsync(CancellationToken cancellationToken = default);
+
     Task<TResult> UpdateAsync<TResult>(object id, Func<TResult> notFound, Func<TEntity?, Task<TResult>> final,
         Func<TEntity, TEntity> update);
 

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace DDD.BaseModels.Service;
@@ -7,7 +8,8 @@ internal class BaseCud<TContext, TEntity>(TContext context, ILogger<IBaseCud<TCo
 {
     private readonly DbSet<TEntity> _dbSet = context.Set<TEntity>();
 
-    private IRepositoryState _state = new LocalSaveState();
+    private IDbContextTransaction? _transaction;
+    private bool _autoSave = true;
 
     public Task<bool> DeleteAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
         => DeleteAsync(_dbSet, entities, cancellationToken);
@@ -34,11 +36,24 @@ internal class BaseCud<TContext, TEntity>(TContext context, ILogger<IBaseCud<TCo
     public Task<bool> InsertAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
         => InsertAsync(_dbSet, entities, cancellationToken);
 
+    public async Task<bool> BeginTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        if (_transaction is not null)
+            return true;
+
+        _transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        _autoSave = false;
+        return true;
+    }
+
     public async Task<bool> SaveAsync(CancellationToken cancellationToken = default)
     {
+        if (!_autoSave)
+            return true;
+
         try
         {
-            return _state is not LocalSaveState || await _state.SaveAsync(context);
+            return await context.SaveChangesAsync(cancellationToken) > 0;
         }
         catch (Exception ex)
         {
@@ -47,8 +62,40 @@ internal class BaseCud<TContext, TEntity>(TContext context, ILogger<IBaseCud<TCo
         }
     }
 
-    public void SetState(IRepositoryState state)
-        => _state = state;
+    public async Task<bool> CommitAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var saved = await context.SaveChangesAsync(cancellationToken) > 0;
+            if (_transaction is not null)
+            {
+                await _transaction.CommitAsync(cancellationToken);
+                await _transaction.DisposeAsync();
+                _transaction = null;
+            }
+
+            _autoSave = true;
+            return saved;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Exception in CommitAsync");
+            await RollbackAsync(cancellationToken);
+            return false;
+        }
+    }
+
+    public async Task RollbackAsync(CancellationToken cancellationToken = default)
+    {
+        if (_transaction is not null)
+        {
+            await _transaction.RollbackAsync(cancellationToken);
+            await _transaction.DisposeAsync();
+            _transaction = null;
+        }
+
+        _autoSave = true;
+    }
 
     public Task<bool> UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
         => UpdateAsync(_dbSet, entity, cancellationToken);

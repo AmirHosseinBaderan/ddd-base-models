@@ -37,6 +37,15 @@ public interface IFluentCud<TContext, TEntity> : IAsyncDisposable
 
     IFluentCudOperation<TContext, TEntity> DeleteAsync(Expression<Func<TEntity, bool>> where,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Starts a transaction so subsequent operations are deferred until <see cref="CommitAsync"/>.</summary>
+    Task<bool> BeginTransactionAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Commits all pending changes as a single transactional unit.</summary>
+    Task<bool> CommitAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Rolls back the active transaction and discards pending changes.</summary>
+    Task RollbackAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>

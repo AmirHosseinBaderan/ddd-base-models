@@ -54,6 +54,15 @@ internal sealed class FluentCud<TContext, TEntity>(
         GC.SuppressFinalize(this);
         await cud.DisposeAsync();
     }
+
+    public Task<bool> BeginTransactionAsync(CancellationToken cancellationToken = default)
+        => cud.BeginTransactionAsync(cancellationToken);
+
+    public Task<bool> CommitAsync(CancellationToken cancellationToken = default)
+        => cud.CommitAsync(cancellationToken);
+
+    public Task RollbackAsync(CancellationToken cancellationToken = default)
+        => cud.RollbackAsync(cancellationToken);
 }
 
 internal sealed class FluentCudOperation<TContext, TEntity>(
