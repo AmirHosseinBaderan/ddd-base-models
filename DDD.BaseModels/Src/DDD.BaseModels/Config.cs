@@ -9,7 +9,7 @@ public static class DddConfig
     public static IServiceCollection AddDDDBaseServices(this IServiceCollection services)
     {
         services.AddScoped(typeof(IBaseCud<,>), typeof(BaseCud<,>));
-        services.AddScoped(typeof(IUnitOfWork<>), typeof(UnitOfWork<>));
+        services.AddScoped(typeof(IFluentCud<,>), typeof(FluentCud<,>));
 
         return services;
     }
