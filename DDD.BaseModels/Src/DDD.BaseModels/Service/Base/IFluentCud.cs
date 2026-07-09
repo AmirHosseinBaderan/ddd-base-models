@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using DDD.BaseModels;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,7 +13,7 @@ namespace DDD.BaseModels.Service;
 /// </summary>
 /// <example>
 /// await _cud.AddAsync(entity)
-///     .DispatchEvent(condition, true: () => new CreatedEvent(), false: () => new SkippedEvent());
+///     .DispatchEvent(condition, whenTrue: () => new CreatedEvent(), whenFalse: () => new SkippedEvent());
 /// </example>
 public interface IFluentCud<TContext, TEntity> : IAsyncDisposable
     where TEntity : BaseEntity
@@ -74,4 +75,7 @@ public interface IFluentCudOperation<TContext, TEntity>
 
     /// <summary>Runs the CUD operation and all queued event dispatches, returning the CUD success.</summary>
     Task<bool> ExecuteAsync();
+
+    /// <summary>Makes the operation directly awaitable; running the CUD operation and queued dispatches.</summary>
+    TaskAwaiter<bool> GetAwaiter();
 }
