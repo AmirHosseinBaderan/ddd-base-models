@@ -128,10 +128,17 @@ namespace DDD.BaseModels.Service;
             if (values == null || !values.Any())
                 return query;
 
+            var materialized = values as ICollection<TKey> ?? values.ToList();
+
             var parameter = propertySelector.Parameters.Single();
+            var containsMethod = typeof(Enumerable)
+                .GetMethods()
+                .First(m => m.Name == nameof(Enumerable.Contains) && m.GetParameters().Length == 2)
+                .MakeGenericMethod(typeof(TKey));
+
             var body = Expression.Call(
-                Expression.Constant(values),
-                typeof(IEnumerable<TKey>).GetMethod("Contains", new[] { typeof(TKey) })!,
+                containsMethod,
+                Expression.Constant(materialized),
                 propertySelector.Body
             );
 
